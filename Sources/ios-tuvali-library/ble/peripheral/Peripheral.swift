@@ -17,7 +17,7 @@ class Peripheral: NSObject {
     weak var verifierDelegate: VerifierPeripheralDelegate?
     private var characteristics: [String: CBMutableCharacteristic] = [:]
     var pendingAdvertisementName: String?
-    private var serviceAdded = false
+    var serviceAdded = false
     var maxDataBytes = BLEConstants.MAX_ALLOWED_DATA_LEN
 
     static let SERVICE_UUID = CBUUID(string: "00000001-0000-1000-8000-00805f9b34fb")
@@ -57,7 +57,6 @@ class Peripheral: NSObject {
         }
         bleService.characteristics = mutableCharacteristics
         peripheralManager.add(bleService)
-        serviceAdded = true
     }
 
     func sendData(charUUID: CBUUID, data: Data) {

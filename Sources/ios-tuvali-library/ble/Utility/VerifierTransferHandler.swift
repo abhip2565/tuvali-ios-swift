@@ -24,7 +24,11 @@ class VerifierTransferHandler {
             return
         }
         self.maxDataBytes = maxDataBytes
-        let responseSize = Int(UInt32(bigEndian: data.withUnsafeBytes { $0.load(as: UInt32.self) }))
+        var beSize: UInt32 = 0
+        _ = withUnsafeMutableBytes(of: &beSize) { dst in
+            data.copyBytes(to: dst)
+        }
+        let responseSize = Int(UInt32(bigEndian: beSize))
         guard responseSize > 0 else {
             delegate?.onResponseReceivedFailed("Verifier received empty response")
             return

@@ -11,6 +11,10 @@ class Assembler {
         self.maxDataBytes = maxDataBytes
         self.data = Data(repeating: 0, count: totalSize)
         let effectivePayloadSize = maxDataBytes - chunkMetaSize
+        guard effectivePayloadSize > 0 else {
+            self.chunkReceivedMarker = []
+            return
+        }
         let totalChunks = Int(ceil(Double(totalSize) / Double(effectivePayloadSize)))
         self.chunkReceivedMarker = Array(repeating: false, count: max(totalChunks, 0))
     }

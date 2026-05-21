@@ -40,8 +40,10 @@ extension Peripheral: CBPeripheralManagerDelegate {
     func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
         guard error == nil else {
             logger.error("Failed to add verifier GATT service")
+            serviceAdded = false
             return
         }
+        serviceAdded = true
         verifierDelegate?.onPeripheralReady()
         peripheral.startAdvertising([
             CBAdvertisementDataServiceUUIDsKey: [Peripheral.SERVICE_UUID],

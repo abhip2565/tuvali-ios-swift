@@ -13,10 +13,12 @@ public class Verifier: NSObject {
 
     @available(iOS 13.0, *)
     public func startAdvertisement(_ advIdentifier: String) -> String {
+        bleCommunicator?.stop()
         let communicator = VerifierBleCommunicator(eventEmitter: eventEmitter)
         bleCommunicator = communicator
         communicator.startAdvertisement(advIdentifier: advIdentifier)
-        return "OPENID4VP://connect?name=\(advIdentifier)&key=\(communicator.publicKey.toHex())"
+        let encodedName = advIdentifier.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? advIdentifier
+        return "OPENID4VP://connect?name=\(encodedName)&key=\(communicator.publicKey.toHex())"
     }
 
     @available(iOS 13.0, *)
