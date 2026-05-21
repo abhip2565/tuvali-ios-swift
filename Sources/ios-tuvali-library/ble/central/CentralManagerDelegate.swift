@@ -18,6 +18,10 @@ extension Central {
                 central.connect(peripheral)
                 connectedPeripheral = peripheral
             }
+        } else if walletBleCommunicatorDelegate?.shouldConnectToDiscoveredPeripheral(advertisementData: advertisementData) == true {
+            peripheral.delegate = self
+            central.connect(peripheral)
+            connectedPeripheral = peripheral
         }
     }
 

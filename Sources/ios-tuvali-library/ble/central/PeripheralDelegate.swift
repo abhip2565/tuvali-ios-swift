@@ -52,9 +52,9 @@ extension Central: CBPeripheralDelegate {
         for characteristic in serviceCharacteristics {
             self.cbCharacteristics[characteristic.uuid.uuidString] = characteristic
             if characteristic.uuid == NetworkCharNums.TRANSFER_REPORT_RESPONSE_CHAR_UUID ||
-                characteristic.uuid == NetworkCharNums.VERIFICATION_STATUS_CHAR_UUID || characteristic.uuid == NetworkCharNums.DISCONNECT_CHAR_UUID
+                characteristic.uuid == NetworkCharNums.VERIFICATION_STATUS_CHAR_UUID || characteristic.uuid == NetworkCharNums.DISCONNECT_CHAR_UUID
             {
-                peripheral.setNotifyValue(true, for: characteristic)
+                peripheral.setNotifyValue(true, for: characteristic)
             }
         }
         walletBleCommunicatorDelegate?.createConnectionHandler()

@@ -44,5 +44,16 @@ class TransferReport  {
             totalPages = 0
         }
     }
-}
 
+    func toBytes(maxDataBytes: Int) -> Data {
+        let sequenceCapacity = max((maxDataBytes - 3) / 2, 0)
+        let sequences = Array((missingSequences ?? []).prefix(sequenceCapacity))
+        let pageCount = sequences.isEmpty ? 0 : Int(ceil(Double((missingSequences ?? []).count) / Double(max(sequenceCapacity, 1))))
+        var bytes = Data([UInt8(type.rawValue)])
+        bytes.append(Util.intToNetworkOrderedByteArray(num: pageCount, byteCount: .TwoBytes))
+        sequences.forEach { sequence in
+            bytes.append(Util.intToNetworkOrderedByteArray(num: sequence, byteCount: .TwoBytes))
+        }
+        return bytes
+    }
+}

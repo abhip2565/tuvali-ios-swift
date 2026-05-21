@@ -1,0 +1,24 @@
+{
+  "originHash" : "cadae1650a14434e5422a34eeb3d2be02bc8d52f848320e61f4892f26ec76f55",
+  "pins" : [
+    {
+      "identity" : "crcswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ivanesik/CrcSwift.git",
+      "state" : {
+        "revision" : "bb2fff7fb79815fad0528da71c9168d570bfc76c",
+        "version" : "0.0.3"
+      }
+    },
+    {
+      "identity" : "gzipswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/1024jp/GzipSwift",
+      "state" : {
+        "revision" : "7a7f17761c76a932662ab77028a4329f67d645a4",
+        "version" : "5.2.0"
+      }
+    }
+  ],
+  "version" : 3
+}

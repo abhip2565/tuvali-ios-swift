@@ -1,7 +1,6 @@
 import Foundation
 
 public struct ErrorEvent: Event {
-    var message: String
-    var code: String
+    public var message: String
+    public var code: String
 }
-

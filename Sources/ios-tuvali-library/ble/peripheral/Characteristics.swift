@@ -20,6 +20,8 @@ struct CBcharatcteristic {
     let transferReportResponseChar = CBMutableCharacteristic(type: CBUUID(string: CharacteristicIds.TRANSFER_REPORT_RESPONSE_CHAR_UUID.rawValue), properties: characteristicsMap[CharacteristicIds.TRANSFER_REPORT_RESPONSE_CHAR_UUID.rawValue]!.properties, value: characteristicsMap[CharacteristicIds.TRANSFER_REPORT_RESPONSE_CHAR_UUID.rawValue]!.value, permissions: characteristicsMap[CharacteristicIds.TRANSFER_REPORT_RESPONSE_CHAR_UUID.rawValue]!.permissions)
 
     let verificationStatusChar = CBMutableCharacteristic(type: CBUUID(string: CharacteristicIds.VERIFICATION_STATUS_CHAR_UUID.rawValue), properties: characteristicsMap[CharacteristicIds.VERIFICATION_STATUS_CHAR_UUID.rawValue]!.properties, value: characteristicsMap[CharacteristicIds.VERIFICATION_STATUS_CHAR_UUID.rawValue]!.value, permissions: characteristicsMap[CharacteristicIds.VERIFICATION_STATUS_CHAR_UUID.rawValue]!.permissions)
+
+    let disconnectChar = CBMutableCharacteristic(type: CBUUID(string: CharacteristicIds.DISCONNECT_CHAR_UUID.rawValue), properties: characteristicsMap[CharacteristicIds.DISCONNECT_CHAR_UUID.rawValue]!.properties, value: characteristicsMap[CharacteristicIds.DISCONNECT_CHAR_UUID.rawValue]!.value, permissions: characteristicsMap[CharacteristicIds.DISCONNECT_CHAR_UUID.rawValue]!.permissions)
 }
 
 // TODO: Add conn status change everywhere
@@ -45,6 +47,7 @@ let characteristicsMap: [String: CharacteristicTuple] = [
     "00000009-5026-444A-9E0E-D6F2450F3A77": (properties: CBCharacteristicProperties([.writeWithoutResponse, .write]), permissions: CBAttributePermissions([.writeable]), value: nil),
     "0000000A-5026-444A-9E0E-D6F2450F3A77": (properties: CBCharacteristicProperties([.indicate]), permissions: CBAttributePermissions([.readable]), value: nil),
     "00002037-0000-1000-8000-00805f9b34fb": (properties: CBCharacteristicProperties([.indicate]), permissions: CBAttributePermissions([.readable]), value: nil),
+    "0000000B-5026-444A-9E0E-D6F2450F3A77": (properties: CBCharacteristicProperties([.indicate]), permissions: CBAttributePermissions([.readable]), value: nil),
 ]
 
 struct NetworkCharNums {
@@ -69,6 +72,5 @@ enum NotificationEvent: String {
     case DISCONNECT_STATUS_CHANGE = "DISCONNECT_STATUS_CHANGE"
     case ERROR = "ERROR"
 }
-
 
 

@@ -9,6 +9,7 @@ class WalletBleCommunicator: NSObject {
     var secretTranslator: SecretTranslator?
     var cryptoBox: WalletCryptoBox = WalletCryptoBoxBuilder().build()
     var advIdentifier: Data?
+    var advName: String?
     var verifierPublicKey: Data?
     var createConnection: (() -> Void)?
     static let EXCHANGE_RECEIVER_INFO_DATA = "{\"deviceName\":\"Verifier\"}"
@@ -21,6 +22,10 @@ class WalletBleCommunicator: NSObject {
 
     func setAdvIdentifier(identifier: Data) {
         self.advIdentifier = identifier
+    }
+
+    func setAdvName(_ name: String?) {
+        self.advName = name
     }
 
     func setVerifierPublicKey(publicKeyData: Data) {

@@ -13,5 +13,6 @@ protocol WalletBleCommunicatorProtocol: AnyObject {
     func onDisconnectStatusChange(data: Data?)
     func createConnectionHandler()
     func setVeriferKeyOnSameIdentifier(payload: Data, publicData: Data, completion: (() -> Void))
+    func shouldConnectToDiscoveredPeripheral(advertisementData: [String: Any]) -> Bool
     func onDisconnect()
 }
