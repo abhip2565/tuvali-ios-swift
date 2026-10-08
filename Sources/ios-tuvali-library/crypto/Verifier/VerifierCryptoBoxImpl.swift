@@ -8,8 +8,8 @@ class VerifierCryptoBoxImpl: VerifierCryptoBox {
         return selfCryptoBox.getPublicKey()
     }
 
-    func buildSecretsTranslator(nonce: Data, walletPublicKey: Data) -> SecretTranslator {
-        let cipherPackage = selfCryptoBox.createCipherPackage(
+    func buildSecretsTranslator(nonce: Data, walletPublicKey: Data) throws -> SecretTranslator {
+        let cipherPackage = try selfCryptoBox.createCipherPackage(
             otherPublicKey: walletPublicKey,
             senderInfo: CryptoConstants.VERIFIER_INFO,
             recieverInfo: CryptoConstants.WALLET_INFO,

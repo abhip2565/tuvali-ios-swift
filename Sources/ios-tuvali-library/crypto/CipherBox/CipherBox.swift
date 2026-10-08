@@ -1,6 +1,6 @@
 import Foundation
 
 protocol CipherBox {
-    func encrypt(message: Data) -> Data
-    func decrypt(message: Data) -> Data
+    func encrypt(message: Data) throws -> Data
+    func decrypt(message: Data) throws -> Data
 }

@@ -13,9 +13,9 @@ class CryptoBoxImpl: CryptoBox {
         return privateKey.publicKey.rawRepresentation
     }
 
-    func createCipherPackage(otherPublicKey: Data, senderInfo: String, recieverInfo: String, nonceBytes: Data) -> CipherPackage {
-        let sharedPublicKey = try! Curve25519.KeyAgreement.PublicKey(rawRepresentation: otherPublicKey)
-        let weakKey = try! privateKey.sharedSecretFromKeyAgreement(with: sharedPublicKey)
+    func createCipherPackage(otherPublicKey: Data, senderInfo: String, recieverInfo: String, nonceBytes: Data) throws -> CipherPackage {
+        let sharedPublicKey = try Curve25519.KeyAgreement.PublicKey(rawRepresentation: otherPublicKey)
+        let weakKey = try privateKey.sharedSecretFromKeyAgreement(with: sharedPublicKey)
         let senderKey = KeyGenerator().generateStrongKeyBasedOnHKDF(sharedSecretKey: weakKey, keyLength: CryptoConstants.SECRET_LENTGH, infoData: senderInfo)
         let recieverKey = KeyGenerator().generateStrongKeyBasedOnHKDF(sharedSecretKey: weakKey, keyLength: CryptoConstants.SECRET_LENTGH, infoData: recieverInfo)
         let myselfCipherPackage = CipherBoxImpl(secretKey: senderKey, initializationVector: nonceBytes, digestSizeInBytes: CryptoConstants.NUMBER_OF_MAC_BYTES)

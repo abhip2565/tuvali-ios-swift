@@ -13,17 +13,20 @@ class CipherBoxImpl: CipherBox {
         self.digestSizeInBytes = digestSizeInBytes
     }
 
-    func encrypt(message: Data) -> Data {
-        let encryptedSealedBox = try! AES.GCM.seal(message, using: secretKey, nonce: AES.GCM.Nonce(data: initializationVector))
+    func encrypt(message: Data) throws -> Data {
+        let encryptedSealedBox = try AES.GCM.seal(message, using: secretKey, nonce: AES.GCM.Nonce(data: initializationVector))
         let cipherWithAuthTag = encryptedSealedBox.ciphertext + encryptedSealedBox.tag
         return cipherWithAuthTag
     }
 
-    func decrypt(message: Data) -> Data {
+    func decrypt(message: Data) throws -> Data {
+        guard message.count >= digestSizeInBytes else {
+            throw CryptoKitError.incorrectParameterSize
+        }
         let cipherMessage = message.dropLast(digestSizeInBytes)
         let cipherTag = message.suffix(digestSizeInBytes)
-        let sealedBox = try! AES.GCM.SealedBox(nonce: AES.GCM.Nonce(data: initializationVector), ciphertext: cipherMessage, tag: cipherTag)
-        let decryptedData = try! AES.GCM.open(sealedBox, using: secretKey)
+        let sealedBox = try AES.GCM.SealedBox(nonce: AES.GCM.Nonce(data: initializationVector), ciphertext: cipherMessage, tag: cipherTag)
+        let decryptedData = try AES.GCM.open(sealedBox, using: secretKey)
         return decryptedData
     }
 }

@@ -75,9 +75,14 @@ class WalletBleCommunicator: NSObject {
     }
 
     func send(_ payload: String) {
-        var dataInBytes = Data(payload.utf8)
-        var compressedBytes = try! dataInBytes.gzipped()
-        var encryptedData = secretTranslator?.encryptToSend(data: compressedBytes)
+        let encryptedData: Data?
+        do {
+            let compressedBytes = try Data(payload.utf8).gzipped()
+            encryptedData = try secretTranslator?.encryptToSend(data: compressedBytes)
+        } catch {
+            rejectSecureChannel("Wallet failed to encrypt response")
+            return
+        }
 
         if (encryptedData != nil) {
             DispatchQueue.main.async {
@@ -103,14 +108,25 @@ class WalletBleCommunicator: NSObject {
         }
     }
 
+    private func rejectSecureChannel(_ message: String) {
+        secretTranslator = nil
+        handleDestroyConnection(isSelfDisconnect: true)
+        EventEmitter.sharedInstance.emitErrorEvent(message: message, code: VerifierErrorEnum.corruptedChunkReceived.code)
+    }
+
     func writeToIdentifyRequest() {
         let publicKey = self.cryptoBox.getPublicKey()
         guard let verifierPublicKey = self.verifierPublicKey else {
        
             return
         }
-        secretTranslator = (cryptoBox.buildSecretsTranslator(verifierPublicKey: verifierPublicKey))
-        var nonce = (self.secretTranslator?.getNonce())!
-        central?.writeWithResponse(serviceUuid: Peripheral.SERVICE_UUID, charUUID: NetworkCharNums.IDENTIFY_REQUEST_CHAR_UUID, data: nonce + publicKey)
+        secretTranslator = nil
+        do {
+            let translator = try cryptoBox.buildSecretsTranslator(verifierPublicKey: verifierPublicKey)
+            secretTranslator = translator
+            central?.writeWithResponse(serviceUuid: Peripheral.SERVICE_UUID, charUUID: NetworkCharNums.IDENTIFY_REQUEST_CHAR_UUID, data: translator.getNonce() + publicKey)
+        } catch {
+            rejectSecureChannel("Wallet failed to establish secure channel")
+        }
     }
 }

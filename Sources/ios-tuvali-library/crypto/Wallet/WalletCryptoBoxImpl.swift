@@ -9,11 +9,11 @@ class WalletCryptoBoxImpl: WalletCryptoBox {
         return selfCryptoBox.getPublicKey()
     }
     
-    func buildSecretsTranslator(verifierPublicKey: Data) -> SecretTranslator {
+    func buildSecretsTranslator(verifierPublicKey: Data) throws -> SecretTranslator {
         // WalletInfo -> senderInfo -> Sendkey -> myselfPackage
         // VerifierInfo -> receiverInfo -> receiverKey -> OtherPackage -> encrypt (*)
         let secureRandom = secureRandomData(count: CryptoConstants.NONCE_LENGTH)
-        let selfCipherPackage = selfCryptoBox.createCipherPackage(otherPublicKey: verifierPublicKey, senderInfo: CryptoConstants.WALLET_INFO, recieverInfo: CryptoConstants.VERIFIER_INFO, nonceBytes: secureRandom)
+        let selfCipherPackage = try selfCryptoBox.createCipherPackage(otherPublicKey: verifierPublicKey, senderInfo: CryptoConstants.WALLET_INFO, recieverInfo: CryptoConstants.VERIFIER_INFO, nonceBytes: secureRandom)
         return SenderTransferOwnershipOfData(CipherPackage: selfCipherPackage, nonce: secureRandom)
     }
     

@@ -15,13 +15,13 @@ class SenderTransferOwnershipOfData: SecretTranslator {
         return self.nonce
     }
 
-    func encryptToSend(data: Data) -> Data {
-        let encrypt = (receiverCipherBox.encrypt(message: data))
+    func encryptToSend(data: Data) throws -> Data {
+        let encrypt = try receiverCipherBox.encrypt(message: data)
         return encrypt
     }
 
-    func decryptUponReceive(data: Data) -> Data {
-        let decrypt = (senderCipherBox.decrypt(message: data))
+    func decryptUponReceive(data: Data) throws -> Data {
+        let decrypt = try senderCipherBox.decrypt(message: data)
         return decrypt
     }
 }

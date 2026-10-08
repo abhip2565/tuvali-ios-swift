@@ -31,9 +31,18 @@ extension Peripheral: CBPeripheralManagerDelegate {
     
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
         logger.info("Received write request for characteristic")
-        requests.forEach { request in
-            verifierDelegate?.onWrite(uuid: request.characteristic.uuid, data: request.value ?? Data())
-            peripheral.respond(to: request, withResult: .success)
+        guard let firstRequest = requests.first else { return }
+        guard let verifierDelegate else {
+            peripheral.respond(to: firstRequest, withResult: .unlikelyError)
+            return
+        }
+        let writes = requests.map {
+            VerifierWriteBatch.Write(uuid: $0.characteristic.uuid,
+                                     properties: $0.characteristic.properties,
+                                     offset: $0.offset, value: $0.value)
+        }
+        VerifierWriteBatch.process(writes, onWrite: verifierDelegate.onWrite) { result in
+            peripheral.respond(to: firstRequest, withResult: result)
         }
     }
 

@@ -17,8 +17,18 @@ public class Verifier: NSObject {
         let communicator = VerifierBleCommunicator(eventEmitter: eventEmitter)
         bleCommunicator = communicator
         communicator.startAdvertisement(advIdentifier: advIdentifier)
-        let encodedName = advIdentifier.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? advIdentifier
-        return "OPENID4VP://connect?name=\(encodedName)&key=\(communicator.publicKey.toHex())"
+        return Self.connectionURI(name: advIdentifier, publicKey: communicator.publicKey)
+    }
+
+    static func connectionURI(name: String, publicKey: Data) -> String {
+        var components = URLComponents()
+        components.scheme = "OPENID4VP"
+        components.host = "connect"
+        components.queryItems = [
+            URLQueryItem(name: "name", value: name),
+            URLQueryItem(name: "key", value: publicKey.toHex())
+        ]
+        return components.string!
     }
 
     @available(iOS 13.0, *)

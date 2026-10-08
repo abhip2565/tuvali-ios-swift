@@ -23,7 +23,13 @@ class VerifierBleCommunicator: NSObject {
     }
 
     func stop() {
+        secretsTranslator = nil
         peripheral.stop()
+    }
+
+    private func rejectSession(_ message: String) {
+        stop()
+        onResponseReceivedFailed(message)
     }
 
     func notifyVerificationStatus(accepted: Bool) {
@@ -32,14 +38,20 @@ class VerifierBleCommunicator: NSObject {
     }
 
     private func handleIdentifyRequest(_ data: Data) {
-        guard data.count >= CryptoConstants.NONCE_LENGTH + 32 else {
+        secretsTranslator = nil
+        guard data.count == CryptoConstants.NONCE_LENGTH + 32 else {
+            rejectSession("Verifier received invalid identify request")
             return
         }
 
         let nonce = data.subdata(in: 0..<CryptoConstants.NONCE_LENGTH)
         let walletPublicKey = data.subdata(in: CryptoConstants.NONCE_LENGTH..<(CryptoConstants.NONCE_LENGTH + 32))
-        secretsTranslator = verifierCryptoBox.buildSecretsTranslator(nonce: nonce, walletPublicKey: walletPublicKey)
-        eventEmitter.emitEvent(SecureChannelEstablishedEvent())
+        do {
+            secretsTranslator = try verifierCryptoBox.buildSecretsTranslator(nonce: nonce, walletPublicKey: walletPublicKey)
+            eventEmitter.emitEvent(SecureChannelEstablishedEvent())
+        } catch {
+            rejectSession("Verifier failed to establish secure channel")
+        }
     }
 }
 
@@ -85,18 +97,25 @@ extension VerifierBleCommunicator: VerifierTransferHandlerDelegate {
     }
 
     func onResponseReceived(data: Data, crcFailureCount: Int, totalChunkCount: Int) {
-        guard let decryptedData = secretsTranslator?.decryptUponReceive(data: data),
-              let decompressedData = try? decryptedData.gunzipped(),
-              let payload = String(data: decompressedData, encoding: .utf8) else {
-            onResponseReceivedFailed("Verifier failed to decrypt or decompress response")
+        guard let secretsTranslator else {
+            rejectSession("Verifier received response without a secure channel")
             return
         }
-
-        eventEmitter.emitEvent(DataReceivedEvent(
-            data: payload,
-            crcFailureCount: crcFailureCount,
-            totalChunkCount: totalChunkCount
-        ))
+        do {
+            let decryptedData = try secretsTranslator.decryptUponReceive(data: data)
+            let decompressedData = try decryptedData.gunzipped()
+            guard let payload = String(data: decompressedData, encoding: .utf8) else {
+                rejectSession("Verifier received invalid response text")
+                return
+            }
+            eventEmitter.emitEvent(DataReceivedEvent(
+                data: payload,
+                crcFailureCount: crcFailureCount,
+                totalChunkCount: totalChunkCount
+            ))
+        } catch {
+            rejectSession("Verifier failed to decrypt or decompress response")
+        }
     }
 
     func onResponseReceivedFailed(_ message: String) {
