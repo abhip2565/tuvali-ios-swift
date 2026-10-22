@@ -29,6 +29,12 @@ let package = Package(
             ]),
         .testTarget(
             name: "ios-tuvali-libraryTests",
-            dependencies: ["ios-tuvali-library"]),
+            dependencies: [
+                "ios-tuvali-library",
+                .product(name: "SwiftCBOR", package: "SwiftCBOR")
+            ],
+            resources: [
+                .copy("Resources/iso")
+            ]),
     ]
 )
