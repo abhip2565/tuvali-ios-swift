@@ -16,6 +16,11 @@ enum SessionTestVectors {
 
     /// The hex string at [path] (keys separated by dots), as bytes.
     static func bytes(_ path: String) -> [UInt8] {
+        string(path).hexToBytes()
+    }
+
+    /// The string at [path] (keys separated by dots).
+    static func string(_ path: String) -> String {
         var value: Any = session
         for key in path.split(separator: ".") {
             guard let object = value as? [String: Any], let next = object[String(key)] else {
@@ -23,7 +28,7 @@ enum SessionTestVectors {
             }
             value = next
         }
-        guard let hex = value as? String else { fatalError("Session vector \(path) is not a hex string") }
-        return hex.hexToBytes()
+        guard let text = value as? String else { fatalError("Session vector \(path) is not a string") }
+        return text
     }
 }
