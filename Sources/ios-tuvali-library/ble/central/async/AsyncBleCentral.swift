@@ -1,6 +1,8 @@
 @preconcurrency import CoreBluetooth
 import Foundation
 
+private let logger = TaggedLogger(tag: "AsyncBleCentral")
+
 /// The Bluetooth LE central: scans by service, connects, and watches Bluetooth's state.
 /// CoreBluetooth needs one CBCentralManager to both find a peripheral and connect to it, so both
 /// live here; each connection is then served by its own AsyncGattClient.
@@ -81,6 +83,7 @@ final class AsyncBleCentral: BleCentralEvents, @unchecked Sendable {
         switch state {
         case .poweredOn:
             guard !scan.isScanning else { return }
+            logger.info("Scanning for the reader's service")
             activeScan?.isScanning = true
             manager.scanForPeripherals(withServices: [scan.serviceUuid])
         case .resetting:
@@ -100,6 +103,7 @@ final class AsyncBleCentral: BleCentralEvents, @unchecked Sendable {
 
     private func finishScan(throwing failure: Error) {
         guard let scan = activeScan else { return }
+        logger.warning("Scan ended: \(failure)")
         activeScan = nil
         if scan.isScanning { manager.stopScan() }
         scan.continuation.finish(throwing: failure)
@@ -107,6 +111,7 @@ final class AsyncBleCentral: BleCentralEvents, @unchecked Sendable {
 
     private func endScan(_ scanId: UUID) {
         guard let scan = activeScan, scan.id == scanId else { return }
+        logger.debug("Scan stopped")
         activeScan = nil
         if scan.isScanning { manager.stopScan() }
     }
@@ -171,6 +176,7 @@ final class AsyncBleCentral: BleCentralEvents, @unchecked Sendable {
 
     private func failConnection(_ connectionId: UUID, _ failure: Error, cancelAttempt: Bool) {
         guard let pending = pendingConnection, pending.id == connectionId else { return }
+        if !(failure is CancellationError) { logger.warning("Connection attempt ended: \(failure)") }
         pendingConnection = nil
         manager.setEvents(nil, for: pending.client.peripheral)
         if cancelAttempt { manager.cancelPeripheralConnection(pending.client.peripheral) }
@@ -193,6 +199,7 @@ final class AsyncBleCentral: BleCentralEvents, @unchecked Sendable {
     // MARK: CoreBluetooth's events (on the Bluetooth queue)
 
     func stateChanged(_ state: CBManagerState) {
+        logger.info("Bluetooth is \(state.name)")
         // off, resetting, or no longer allowed: every open or opening link is gone
         if [.poweredOff, .resetting, .unauthorized].contains(state) {
             if let pending = pendingConnection {
@@ -214,6 +221,7 @@ final class AsyncBleCentral: BleCentralEvents, @unchecked Sendable {
 
     func connected(_ peripheral: GattPeripheral) {
         guard let pending = pendingConnection(to: peripheral) else { return }
+        logger.info("Connected")
         pendingConnection = nil
         pending.client.markConnected()
         clients[peripheral.identifier] = pending.client

@@ -39,3 +39,18 @@ struct GattTimeouts {
     var connect: TimeInterval = 10
     var operation: TimeInterval = 5
 }
+
+extension CBManagerState {
+    /// The state's name for logs: CBManagerState has no readable description of its own.
+    var name: String {
+        switch self {
+        case .unknown: return "unknown"
+        case .resetting: return "resetting"
+        case .unsupported: return "unsupported"
+        case .unauthorized: return "unauthorized"
+        case .poweredOff: return "poweredOff"
+        case .poweredOn: return "poweredOn"
+        @unknown default: return "state \(rawValue)"
+        }
+    }
+}

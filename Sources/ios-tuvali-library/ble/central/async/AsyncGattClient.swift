@@ -1,6 +1,8 @@
 @preconcurrency import CoreBluetooth
 import Foundation
 
+private let logger = TaggedLogger(tag: "AsyncGattClient")
+
 /// A Bluetooth LE GATT client for one connected peripheral, where each operation awaits
 /// CoreBluetooth's answer. Get one from AsyncBleCentral.connect.
 ///
@@ -149,6 +151,7 @@ final class AsyncGattClient: GattPeripheralEvents, @unchecked Sendable {
     /// Disconnects and releases everything. Pending and later operations fail.
     func close() {
         queue.async {
+            logger.debug("GATT client closed")
             self.connectionState = .disconnected
             self.failPendingOperation(GattDisconnectedError(reason: nil))
             self.notificationContinuation.finish()
@@ -164,6 +167,7 @@ final class AsyncGattClient: GattPeripheralEvents, @unchecked Sendable {
 
     func linkLost(_ reason: LinkLossReason) {
         guard connectionState == .connected else { return }
+        logger.info("GATT link lost: \(reason)")
         connectionState = .lost(reason)
         failPendingOperation(GattDisconnectedError(reason: reason))
         // values already received are still delivered, then the listener gets the error
@@ -235,6 +239,10 @@ final class AsyncGattClient: GattPeripheralEvents, @unchecked Sendable {
     private func finishOperation(_ operationId: UUID, with result: Result<Any, Error>) -> Bool {
         guard let pending = pendingOperation, pending.id == operationId else { return false }
         pendingOperation = nil
+        // cancellations are deliberate, and a lost link is already logged as such
+        if case let .failure(failure) = result, !(failure is CancellationError), !(failure is GattDisconnectedError) {
+            logger.warning("\(failure)")
+        }
         pending.continuation.resume(with: result)
         return true
     }
