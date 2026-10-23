@@ -21,7 +21,7 @@ private let logger = TaggedLogger(tag: "AsyncGattClient")
 ///
 /// All state lives on the Bluetooth queue (so the class is safe to share between tasks);
 /// connectionState and maximumWriteLength are read there.
-final class AsyncGattClient: GattPeripheralEvents, @unchecked Sendable {
+final class AsyncGattClient: GattClient, GattPeripheralEvents, @unchecked Sendable {
     let peripheral: GattPeripheral
     private let queue: DispatchQueue
     private let timeouts: GattTimeouts
@@ -69,6 +69,22 @@ final class AsyncGattClient: GattPeripheralEvents, @unchecked Sendable {
         notificationContinuation = continuation
     }
 
+    /// connectionState, read from any task.
+    func currentConnectionState() async -> GattConnectionState {
+        await onQueue { self.connectionState }
+    }
+
+    /// maximumWriteLength, read from any task.
+    func currentMaximumWriteLength() async -> Int {
+        await onQueue { self.maximumWriteLength }
+    }
+
+    private func onQueue<T>(_ read: @escaping () -> T) async -> T {
+        await withCheckedContinuation { (continuation: CheckedContinuation<T, Never>) in
+            queue.async { continuation.resume(returning: read()) }
+        }
+    }
+
     // MARK: operations
 
     func discoverServices(_ serviceUuids: [CBUUID]?) async throws -> [CBService] {
@@ -83,12 +99,17 @@ final class AsyncGattClient: GattPeripheralEvents, @unchecked Sendable {
         }
     }
 
+    /// findService with the default retries.
+    func findService(_ serviceUuid: CBUUID) async throws -> CBService {
+        try await findService(serviceUuid, attempts: 3, retryDelay: 0.5)
+    }
+
     /// Discovers services until [serviceUuid] appears, then its characteristics. Discovery right
     /// after connecting can come back incomplete, so it is retried [attempts] times.
     func findService(
         _ serviceUuid: CBUUID,
-        attempts: Int = 3,
-        retryDelay: TimeInterval = 0.5
+        attempts: Int,
+        retryDelay: TimeInterval
     ) async throws -> CBService {
         for attempt in 1...attempts {
             let services = try await discoverServices([serviceUuid])

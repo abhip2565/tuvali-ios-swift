@@ -62,7 +62,7 @@ final class AsyncGattClientOperationsTests: XCTestCase {
 
     func testFindServiceRetriesDiscoveryUntilTheServiceAppears() async throws {
         let client = client!
-        let search = Task { try await client.findService(MockGattPeripheral.serviceUuid, retryDelay: 0.01) }
+        let search = Task { try await client.findService(MockGattPeripheral.serviceUuid, attempts: 3, retryDelay: 0.01) }
         try await eventually { self.bluetooth.onQueue { self.peripheral.discoverServicesRequests.count == 1 } }
 
         // the first discovery comes back without the service
