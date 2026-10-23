@@ -1,6 +1,7 @@
 import Foundation
 import CoreBluetooth
-import os
+
+private let logger = TaggedLogger(tag: "Central")
 
 @available(iOS 13.0, *)
 extension Central {
@@ -21,13 +22,13 @@ extension Central {
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        os_log(.info, "Connected to peripheral: %{public}s", String(describing: peripheral.name))
+        logger.info("Connected to peripheral: \(String(describing: peripheral.name))")
         central.stopScan()
         peripheral.discoverServices([Peripheral.SERVICE_UUID])
     }
 
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
-        os_log(.info, "Peripheral disconnected")
+        logger.info("Peripheral disconnected")
         if let connectedPeripheral = connectedPeripheral {
             central.cancelPeripheralConnection(connectedPeripheral)
         }

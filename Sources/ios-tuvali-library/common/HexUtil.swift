@@ -1,5 +1,6 @@
 import Foundation
-import os
+
+private let logger = TaggedLogger(tag: "HexUtil")
 
 func hexStringToData(string: String) -> Data {
     let stringArray = Array(string)
@@ -22,7 +23,7 @@ func stringToJson(jsonText: String) -> NSDictionary {
         do {
             dictonary = try JSONSerialization.jsonObject(with: data, options: []) as? [String:AnyObject] as NSDictionary?
         } catch let error as NSError {
-            os_log(.error, " %{public}@ ", error)
+            logger.error(" \(error) ")
         }
     }
     return dictonary!

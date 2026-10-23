@@ -1,6 +1,8 @@
 import Foundation
 import CoreBluetooth
-import os
+
+private let logger = TaggedLogger(tag: "Central")
+
 @available(iOS 13.0, *)
 extension Central: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
@@ -27,7 +29,7 @@ extension Central: CBPeripheralDelegate {
             peripheral.discoverCharacteristics(CharacteristicIds.allCases.map{CBUUID(string: $0.rawValue)}, for: service)
         }
 
-        os_log(.info, "found %{public}@ services for peripheral %{public}@",String(describing: peripheral.services?.count),String(describing: peripheral.name))
+        logger.info("found \(String(describing: peripheral.services?.count)) services for peripheral \(String(describing: peripheral.name))")
     }
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
@@ -62,13 +64,13 @@ extension Central: CBPeripheralDelegate {
     func retryServicesDiscovery(_ peripheral : CBPeripheral){
         if retryStrategy.shouldRetry() {
             let waitTime = retryStrategy.getWaitTime()
-            os_log(.error, "Error while discovering services retrying again after %{public}d time", waitTime)
+            logger.error("Error while discovering services retrying again after \(waitTime) time")
             DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(Int(waitTime))) {
                 peripheral.discoverServices([Peripheral.SERVICE_UUID])
             }
         }
         else {
-            os_log(.error, "Error while discovering services after retrying multiple times")
+            logger.error("Error while discovering services after retrying multiple times")
             retryStrategy.reset()
             return
         }
@@ -77,13 +79,13 @@ extension Central: CBPeripheralDelegate {
     func retryCharacteristicsDiscovery(_ peripheral : CBPeripheral, _ service : CBService){
         if retryStrategy.shouldRetry() {
             let waitTime = retryStrategy.getWaitTime()
-            os_log(.error, "Error while discovering services retrying again after %{public}d time", waitTime)
+            logger.error("Error while discovering services retrying again after \(waitTime) time")
             DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(Int(waitTime))) {
                 peripheral.discoverCharacteristics(CharacteristicIds.allCases.map{CBUUID(string: $0.rawValue)}, for: service)
             }
         }
         else {
-            os_log(.error, "Error while discovering services after retrying multiple times")
+            logger.error("Error while discovering services after retrying multiple times")
             retryStrategy.reset()
             return
         }
@@ -92,21 +94,21 @@ extension Central: CBPeripheralDelegate {
     func retryTransferReportRequest(){
         if transferReportRequestRetryStrategy.shouldRetry() {
             let waitTime = transferReportRequestRetryStrategy.getWaitTime()
-            os_log(.error, "Error while requesting transfer report retrying again after  %{public}d time", waitTime)
+            logger.error("Error while requesting transfer report retrying again after  \(waitTime) time")
             DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(Int(waitTime))) {
                 self.delegate?.onFailedToSendTransferReportRequest()
             }
         } else {
-            os_log(.error, "Failed to request transfer report even after multiple retries")
+            logger.error("Failed to request transfer report even after multiple retries")
             transferReportRequestRetryStrategy.reset()
             return
         }
     }
 
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
-        os_log(.info, "Central was able to update value for the characteristic: %{public}s", characteristic.uuid.uuidString)
+        logger.info("Central was able to update value for the characteristic: \(characteristic.uuid.uuidString)")
         if let error = error {
-            os_log(.info, "Unable to recieve updates from device: %{public}@", error.localizedDescription)
+            logger.info("Unable to recieve updates from device: \(error.localizedDescription)")
             return
         }
         if characteristic.uuid == NetworkCharNums.TRANSFER_REPORT_RESPONSE_CHAR_UUID {
@@ -124,7 +126,7 @@ extension Central: CBPeripheralDelegate {
 
     func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
         if let error = error {
-            os_log(.error, "Unable to write to characteristic: %{public}@", error.localizedDescription)
+            logger.error("Unable to write to characteristic: \(error.localizedDescription)")
             if characteristic.uuid == NetworkCharNums.TRANSFER_REPORT_REQUEST_CHAR_UUID {
                 retryTransferReportRequest()
             }

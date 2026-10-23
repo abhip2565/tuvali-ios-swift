@@ -1,5 +1,7 @@
 import Foundation
-import os
+
+private let logger = TaggedLogger(tag: "ErrorHandler")
+
 class ErrorHandler {
     public static var sharedInstance = ErrorHandler()
     private var walletExceptionHandler: WalletExceptionHandler?
@@ -22,7 +24,7 @@ class ErrorHandler {
     }
 
     private func handleUnknownException(error: WalletErrorEnum) {
-        os_log(.error, "Error in OpenID4vBLE: %{public}@", error.description)
+        logger.error("Error in OpenID4vBLE: \(error.description)")
         self.onError?(error.description, error.code)
     }
 }

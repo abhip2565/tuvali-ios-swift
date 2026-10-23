@@ -1,5 +1,7 @@
 import Foundation
-import os
+
+private let logger = TaggedLogger(tag: "TransferHandler")
+
 @available(iOS 13.0, *)
 class TransferHandler {
     var data: Data?
@@ -20,13 +22,13 @@ class TransferHandler {
         handleMessage(msg: message)
     }
     deinit{
-        os_log(.debug, "deinit happend in transferhandler")
+        logger.debug("deinit happend in transferhandler")
     }
 
     private func handleMessage(msg: imessage) {
         if msg.msgType == .INIT_RESPONSE_TRANSFER {
             var responseData = msg.data!
-            os_log(.info, "Total response size of data %{public}d",(responseData.count))
+            logger.info("Total response size of data \(responseData.count)")
             chunker = Chunker(chunkData: responseData, mtuSize: msg.mtuSize)
             currentState = States.ResponseSizeWritePending
             sendMessage(message: imessage(msgType: .RESPONSE_SIZE_WRITE_PENDING, data: responseData, dataSize: responseData.count))
@@ -39,7 +41,7 @@ class TransferHandler {
             currentState = States.ResponseSizeWriteSuccess
             initResponseChunkSend()
         } else if msg.msgType == .RESPONSE_SIZE_WRITE_FAILED {
-            os_log(.error, "Failed to write response size")
+            logger.error("Failed to write response size")
             currentState = States.ResponseWriteFailed
         } else if msg.msgType == .INIT_RESPONSE_CHUNK_TRANSFER {
             currentState = .ResponseWritePending
@@ -56,7 +58,7 @@ class TransferHandler {
         } else if msg.msgType == .RESPONSE_CHUNK_WRITE_SUCCESS {
             // NoOp: iOS lacks support for writeWithoutResponse callbacks unlike Android
         } else if msg.msgType == .RESPONSE_CHUNK_WRITE_FAILURE {
-            os_log(.error, "Response chunk write failed")
+            logger.error("Response chunk write failed")
         } else if msg.msgType == .RESPONSE_TRANSFER_COMPLETE {
             currentState = States.TransferComplete
             sendMessage(message: imessage(msgType: .READ_TRANSMISSION_REPORT))
@@ -64,7 +66,7 @@ class TransferHandler {
             currentState = States.ResponseWriteFailed
             ErrorHandler.sharedInstance.handleException(type: .walletException, error: .responseTransferFailure)
         } else {
-            os_log(.error, "Out of scope")
+            logger.error("Out of scope")
         }
     }
 
@@ -82,19 +84,19 @@ class TransferHandler {
         var notifyObj: Data
         let data  = Data([UInt8(clamping: 1)])
         delegate?.write(serviceUuid: BLEConstants.SERVICE_UUID, charUUID: NetworkCharNums.TRANSFER_REPORT_REQUEST_CHAR_UUID, data: data, withResponse: true)
-        os_log(.info, "transmission report requested")
+        logger.info("transmission report requested")
     }
 
     private func handleTransmissionReport(report: Data) {
         let r = TransferReport(bytes: report)
-        os_log(.info, "Got the transfer report :  %{public}d", (r.type.rawValue))
-        os_log(.info, "Missing pages: %{public}d ", (r.totalPages))
+        logger.info("Got the transfer report :  \(r.type.rawValue)")
+        logger.info("Missing pages: \(r.totalPages) ")
 
         if (r.type == .SUCCESS) {
             currentState = States.TransferVerified
             EventEmitter.sharedInstance.emitEvent(DataSentEvent())
             failureFrameRetryCounter = 0
-            os_log(.info, "Emitting VC RECEIVED message")
+            logger.info("Emitting VC RECEIVED message")
         } else if r.type == .MISSING_CHUNKS {
             currentState = .PartiallyTransferred
             if (failureFrameRetryCounter >= MAX_FAILURE_FRAME_RETRY_LIMIT) {
@@ -104,7 +106,7 @@ class TransferHandler {
                 sendRetryRespChunk(missingChunks: r.missingSequences!)
             }
         } else {
-            os_log(.info, "handle transfer report parsing, report-type= %{public}d", r.type.rawValue)
+            logger.info("handle transfer report parsing, report-type= \(r.type.rawValue)")
             failureFrameRetryCounter = 0
             sendMessage(message: imessage(msgType: .RESPONSE_TRANSFER_FAILED, data: nil, dataSize: 0))
         }
@@ -129,7 +131,7 @@ class TransferHandler {
             }
             sendMessage(message: imessage(msgType: .READ_TRANSMISSION_REPORT))
         } else {
-            os_log(.error, "chunker is nil !")
+            logger.error("chunker is nil !")
         }
     }
 }

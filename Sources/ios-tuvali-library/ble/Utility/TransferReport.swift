@@ -1,5 +1,6 @@
 import Foundation
-import os
+
+private let logger = TaggedLogger(tag: "TransferReport")
 
 /*
  +---------+------------------+---------------------+-------------------+-------------------+-------------------+
@@ -36,7 +37,7 @@ class TransferReport  {
                     missingChunksData = missingChunksData.dropFirst(2)
                 }
 
-                os_log(.debug,"%{public}@", missingSequences ?? "")
+                logger.debug("\(missingSequences ?? [])")
             }
         } else {
             type = .MISSING_CHUNKS

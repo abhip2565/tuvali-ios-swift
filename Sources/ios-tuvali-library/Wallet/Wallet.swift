@@ -1,5 +1,7 @@
 import Foundation
-import os
+
+private let logger = TaggedLogger(tag: "Wallet")
+
 public class Wallet: WalletProtocol {
     @available(iOS 13.0, *)
     var bleCommunicator: WalletBleCommunicator?
@@ -9,7 +11,7 @@ public class Wallet: WalletProtocol {
    }
 
     public func startConnection(_ uri: String) {
-        print("startConnection->uri::\(uri)")
+        logger.debug("Starting connection")
         let openId4VpURI = OpenId4vpURI(uri: uri)
 
         guard openId4VpURI.isValid(), let advPayload = getAdvPayload(openId4VpURI) else {
@@ -33,7 +35,7 @@ public class Wallet: WalletProtocol {
 
     public func send(_ payload: String) {
         bleCommunicator?.send(payload)
-        os_log(.info, ">> raw message size : %{public}d", payload.count)
+        logger.info(">> raw message size : \(payload.count)")
     }
 
      public func subscribe( _  listener: @escaping (Event) -> Void) {

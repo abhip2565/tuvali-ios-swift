@@ -1,6 +1,8 @@
 import Foundation
 import CoreBluetooth
 
+private let logger = TaggedLogger(tag: "Wallet")
+
 protocol TransferHandlerDelegate: AnyObject {
     func write(serviceUuid: CBUUID, charUUID: CBUUID, data: Data, withResponse: Bool)
 }
@@ -16,11 +18,11 @@ extension WalletBleCommunicator: WalletBleCommunicatorProtocol {
     }
 
     func onDisconnectStatusChange(data: Data?) {
-        print("Handling notification for disconnect handle")
+        logger.debug("Handling notification for disconnect handle")
         if let data {
             let connStatusID = Int(data[0])
             if connStatusID == 1 {
-                print("con statusid:", connStatusID)
+                logger.debug("con statusid: \(connStatusID)")
                 handleDestroyConnection(isSelfDisconnect: false)
             }
         }

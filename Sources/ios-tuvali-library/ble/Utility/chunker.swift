@@ -1,5 +1,7 @@
 import Foundation
-import os
+
+private let logger = TaggedLogger(tag: "Chunker")
+
 typealias ChunkSeqIndex = Int
 typealias ChunkSeqNumber = Int
 
@@ -35,7 +37,7 @@ class Chunker {
     }
 
     func assignPreSlicedChunks(){
-        os_log(.info, "expected total data size: %{public}d and totalChunkCount: %{public}d ", (chunkData?.count)!, totalChunkCount)
+        logger.info("expected total data size: \((chunkData?.count)!) and totalChunkCount: \(totalChunkCount) ")
         for i: ChunkSeqIndex in 0..<totalChunkCount {
             preSlicedChunks.append(chunk(seqIndex: i))
         }

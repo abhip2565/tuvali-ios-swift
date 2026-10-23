@@ -1,6 +1,7 @@
 import Foundation
 import CoreBluetooth
-import os
+
+private let logger = TaggedLogger(tag: "Central")
 
 
 
@@ -24,23 +25,23 @@ class Central: NSObject, CBCentralManagerDelegate {
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         switch central.state {
         case .poweredOn:
-            os_log(.info, "Central Manager state is powered ON")
+            logger.info("Central Manager state is powered ON")
             scanForPeripherals()
         case .poweredOff:
-            os_log(.info, "Central Manager state is powered OFF")
+            logger.info("Central Manager state is powered OFF")
             EventEmitter.sharedInstance.emitEvent(DisconnectedEvent())
         default:
-            os_log(.debug, "Central Manager state is in state - %@",central.state as! CVarArg)
+            logger.debug("Central Manager state is in state - \(central.state.rawValue)")
         }
     }
 
     deinit {
-        os_log(.info, "Central is DeInitializing")
+        logger.info("Central is DeInitializing")
     }
 
     func scanForPeripherals() {
         centralManager.scanForPeripherals(withServices: [Peripheral.SERVICE_UUID], options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
-        os_log(.info, "Scanning happening ")
+        logger.info("Scanning happening ")
     }
 
     /**
@@ -49,13 +50,13 @@ class Central: NSObject, CBCentralManagerDelegate {
     func writeWithResponse(serviceUuid: CBUUID, charUUID: CBUUID, data: Data) {
         if let connectedPeripheral = connectedPeripheral {
             guard let characteristic = self.cbCharacteristics[charUUID.uuidString] else {
-                os_log(.info, "Did not find the characteristic to write")
+                logger.info("Did not find the characteristic to write")
                 return
             }
             let messageData = Data(bytes: Array(data), count: data.count)
             connectedPeripheral.writeValue(messageData, for: characteristic, type: .withResponse)
         } else {
-            os_log(.info, "connectedPeripheral is nil while writing with resp to char: %{public}s", charUUID.uuidString)
+            logger.info("connectedPeripheral is nil while writing with resp to char: \(charUUID.uuidString)")
         }
     }
 
@@ -65,7 +66,7 @@ class Central: NSObject, CBCentralManagerDelegate {
     func writeWithoutResp(serviceUuid: CBUUID, charUUID: CBUUID, data: Data) {
         if let connectedPeripheral = connectedPeripheral {
             guard let characteristic = self.cbCharacteristics[charUUID.uuidString] else {
-                os_log(.info, "Did not find the characteristic to write")
+                logger.info("Did not find the characteristic to write")
                 return
             }
             let messageData = Data(bytes: Array(data), count: data.count)
