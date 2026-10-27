@@ -204,4 +204,18 @@ final class AsyncGattClientNotificationsTests: XCTestCase {
 
         XCTAssertEqual(count, 0)
     }
+    func testNotificationFloodFailsClosedWithoutSilentlyDroppingParts() async {
+        for _ in 0...maximumQueuedGattNotifications { notify([0x01], on: MockGattPeripheral.notifyUuid) }
+        var count = 0
+        do {
+            for try await _ in client.notifications { count += 1 }
+            XCTFail("Expected notification overflow")
+        } catch {
+            XCTAssertTrue(error is GattNotificationOverflowError)
+        }
+        XCTAssertEqual(count, maximumQueuedGattNotifications)
+        let state = await client.currentConnectionState()
+        XCTAssertEqual(state, .disconnected)
+    }
+
 }

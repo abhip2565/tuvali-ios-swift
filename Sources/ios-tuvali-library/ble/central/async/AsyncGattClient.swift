@@ -1,6 +1,9 @@
 @preconcurrency import CoreBluetooth
 import Foundation
 
+// Fail closed when a peer floods notifications while the holder is deciding.
+let maximumQueuedGattNotifications = 4096
+
 private let logger = TaggedLogger(tag: "AsyncGattClient")
 
 /// A Bluetooth LE GATT client for one connected peripheral, where each operation awaits
@@ -61,7 +64,7 @@ final class AsyncGattClient: GattClient, GattPeripheralEvents, @unchecked Sendab
         self.onClose = onClose
         operationLock = AsyncFifoLock(queue: queue)
         var streamContinuation: AsyncThrowingStream<GattNotification, Error>.Continuation?
-        notifications = AsyncThrowingStream { streamContinuation = $0 }
+        notifications = AsyncThrowingStream(bufferingPolicy: .bufferingOldest(maximumQueuedGattNotifications)) { streamContinuation = $0 }
         // AsyncThrowingStream runs its build closure before returning, so this is always set
         guard let continuation = streamContinuation else {
             preconditionFailure("Notification stream has no continuation")
@@ -331,7 +334,12 @@ final class AsyncGattClient: GattClient, GattPeripheralEvents, @unchecked Sendab
         let readAnswer = answer(.readCharacteristic, error, value)
         if completePendingOperation(.readCharacteristic, characteristic.uuid, readAnswer) { return }
         guard error == nil else { return }
-        notificationContinuation.yield(GattNotification(characteristicUuid: characteristic.uuid, value: value))
+        guard connectionState == .connected else { return }
+        let result = notificationContinuation.yield(GattNotification(characteristicUuid: characteristic.uuid, value: value))
+        if case .dropped = result {
+            notificationContinuation.finish(throwing: GattNotificationOverflowError())
+            close()
+        }
     }
 
     func updatedNotificationState(for characteristic: CBCharacteristic, error: Error?) {

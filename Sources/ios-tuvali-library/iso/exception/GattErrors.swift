@@ -38,3 +38,8 @@ struct BleScanFailedError: Error, CustomStringConvertible {
     let detail: String
     var description: String { "Bluetooth LE scan failed: \(detail)" }
 }
+
+/// A peer sent notifications faster than the application could consume them.
+struct GattNotificationOverflowError: GattError {
+    var description: String { "GATT notification buffer exceeded; connection closed" }
+}
