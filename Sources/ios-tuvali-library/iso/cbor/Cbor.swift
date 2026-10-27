@@ -50,7 +50,8 @@ func encodeCbor(_ item: CBOR) -> [UInt8] {
     case let .tagged(tag, content):
         return cborHeader(majorType: majorTypeTag, argument: tag.rawValue) + encodeCbor(content)
     default:
-        // integers, strings, simple values and floats: SwiftCBOR writes these in their shortest form
+        // SwiftCBOR writes integer and string lengths in their shortest form.
+        // Float16 encoding is unsupported by the dependency; session messages do not emit it.
         return item.encode()
     }
 }
@@ -76,6 +77,32 @@ private func bigEndianBytes(_ value: UInt64, count: Int) -> [UInt8] {
     (0..<count).reversed().map { index in UInt8(truncatingIfNeeded: value >> (8 * UInt64(index))) }
 }
 
+/// Stable comparison bytes, not a wire encoding. SwiftCBOR cannot encode Float16 and would
+/// turn a half-float key into undefined, so keep its Float32 representation under its own marker.
+private func mapKeyFingerprint(_ key: CBOR) -> [UInt8] {
+    switch key {
+    case let .unsignedInt(value):
+        return cborHeader(majorType: majorTypeUnsignedInteger, argument: value)
+    case let .negativeInt(value):
+        // SwiftCBOR's encoder narrows negative arguments through Int64.
+        return cborHeader(majorType: majorTypeNegativeInteger, argument: value)
+    case let .half(value):
+        return [0xf9] + bigEndianBytes(UInt64(value.bitPattern), count: 4)
+    case let .array(values):
+        return cborHeader(majorType: majorTypeArray, argument: UInt64(values.count))
+            + values.flatMap(mapKeyFingerprint)
+    case let .map(entries):
+        let pairs = entries.map { (key: mapKeyFingerprint($0.key), value: mapKeyFingerprint($0.value)) }
+            .sorted { $0.key.lexicographicallyPrecedes($1.key) }
+        return cborHeader(majorType: majorTypeMap, argument: UInt64(entries.count))
+            + pairs.flatMap { $0.key + $0.value }
+    case let .tagged(tag, value):
+        return cborHeader(majorType: majorTypeTag, argument: tag.rawValue) + mapKeyFingerprint(value)
+    default:
+        return key.encode()
+    }
+}
+
 /// Decodes one CBOR item received from a reader.
 ///
 /// Note: we are lenient about *how* a reader writes something and strict about *what* it means.
@@ -83,7 +110,8 @@ private func bigEndianBytes(_ value: UInt64, count: Int) -> [UInt8] {
 /// is clear, and anything used in cryptography is taken from the tag 24 bytes exactly as received,
 /// so it cannot change a hash or a signature check. Duplicate map keys (unclear meaning) and
 /// malformed or hostile input (truncated, trailing bytes, too deep, impossible lengths) are
-/// rejected with CborDecodingError. Everything we send ourselves follows clause 8.1 exactly.
+/// rejected with CborDecodingError. Arbitrary map keys are allowed in extension values, and the
+/// total input is limited to 1 MiB. Everything we send ourselves follows clause 8.1 exactly.
 /// SwiftCBOR also refuses any string or count above 200,000, far above any reader request.
 func decodeCbor(_ encodedCbor: [UInt8]) throws -> CBOR {
     let declaredMapEntries = try checkStructure(encodedCbor)
@@ -165,7 +193,12 @@ private struct OpenContainer {
     /// Items still expected, or nil for an indefinite length, which ends with a break byte.
     var itemsStillExpected: UInt64?
     let isMap: Bool
+    let stringMajorType: UInt8?
     var itemsSeen: UInt64 = 0
+    var keyStart: Int?
+    // SwiftCBOR's map hash depends on dictionary order. Compare canonical key bytes instead,
+    // before the dependency constructs a dictionary that could contain equal composite keys.
+    var encodedKeys: Set<[UInt8]> = []
 }
 
 /// Walks the item headers without recursion before SwiftCBOR decodes them, so hostile input
@@ -177,6 +210,7 @@ private struct OpenContainer {
 /// Returns how many map entries the input declares, to catch repeated keys after decoding.
 @discardableResult
 private func checkStructure(_ encodedCbor: [UInt8], strict: Bool = false) throws -> UInt64 {
+    guard encodedCbor.count <= 1024 * 1024 else { throw CborDecodingError("CBOR input exceeds 1 MiB") }
     guard !encodedCbor.isEmpty else { throw CborDecodingError("Empty CBOR input") }
 
     var openContainers: [OpenContainer] = []
@@ -208,8 +242,25 @@ private func checkStructure(_ encodedCbor: [UInt8], strict: Bool = false) throws
         return argument
     }
 
-    func markItemComplete() {
+    func markItemComplete() throws {
         while var innermost = openContainers.popLast() {
+            if innermost.isMap, innermost.itemsSeen % 2 == 0, let start = innermost.keyStart {
+                let key: CBOR
+                do {
+                    guard let decoded = try CBOR.decode(Array(encodedCbor[start..<readPosition])) else {
+                        throw CborDecodingError("Missing CBOR map key")
+                    }
+                    key = decoded
+                } catch {
+                    throw CborDecodingError("Invalid CBOR map key: \(error)")
+                }
+                // Nested maps have already been checked as their items completed. Encoding
+                // their keys in sorted order makes equal maps independent of insertion order.
+                guard innermost.encodedKeys.insert(mapKeyFingerprint(key)).inserted else {
+                    throw CborDecodingError("A CBOR map repeats a key")
+                }
+                innermost.keyStart = nil
+            }
             innermost.itemsSeen += 1
             guard let expected = innermost.itemsStillExpected else {
                 openContainers.append(innermost)
@@ -224,12 +275,12 @@ private func checkStructure(_ encodedCbor: [UInt8], strict: Bool = false) throws
         }
     }
 
-    func openContainer(itemCount: UInt64?, isMap: Bool) throws {
+    func openContainer(itemCount: UInt64?, isMap: Bool, stringMajorType: UInt8? = nil) throws {
         if itemCount == 0 {
-            markItemComplete()
+            try markItemComplete()
             return
         }
-        openContainers.append(OpenContainer(itemsStillExpected: itemCount, isMap: isMap))
+        openContainers.append(OpenContainer(itemsStillExpected: itemCount, isMap: isMap, stringMajorType: stringMajorType))
         guard openContainers.count <= maxCborNestingDepth else {
             throw CborDecodingError("CBOR nesting deeper than \(maxCborNestingDepth)")
         }
@@ -245,13 +296,27 @@ private func checkStructure(_ encodedCbor: [UInt8], strict: Bool = false) throws
             }
             openContainers.removeLast()
             // each entry is two items: a key and a value (a key without a value fails in SwiftCBOR)
-            if innermost.isMap { declaredMapEntries += innermost.itemsSeen / 2 }
-            markItemComplete()
+            if innermost.isMap {
+                guard innermost.itemsSeen % 2 == 0 else { throw CborDecodingError("CBOR map key has no value") }
+                declaredMapEntries += innermost.itemsSeen / 2
+            }
+            try markItemComplete()
             continue
         }
         let majorType = initialByte >> majorTypeShift
         let additionalInfo = initialByte & additionalInfoMask
+        if let parent = openContainers.last, parent.isMap, parent.itemsSeen % 2 == 0 {
+            openContainers[openContainers.count - 1].keyStart = readPosition - 1
+        }
         let argument = try readArgument(additionalInfo)
+        if let stringType = openContainers.last?.stringMajorType {
+            guard majorType == stringType, argument != nil else {
+                throw CborDecodingError("Indefinite string chunks must be definite strings of the same type")
+            }
+        }
+        if majorType == majorTypeSimpleOrFloat, additionalInfo == oneByteArgument, let value = argument, value < 32 {
+            throw CborDecodingError("Invalid two-byte CBOR simple value")
+        }
         if strict { try checkStrictArgument(majorType: majorType, additionalInfo: additionalInfo, argument: argument) }
         if argument == nil, !(majorTypeByteString...majorTypeMap).contains(majorType) {
             throw CborDecodingError("Indefinite length not allowed for major type \(majorType)")
@@ -259,15 +324,15 @@ private func checkStructure(_ encodedCbor: [UInt8], strict: Bool = false) throws
 
         switch majorType {
         case majorTypeUnsignedInteger, majorTypeNegativeInteger, majorTypeSimpleOrFloat:
-            markItemComplete()
+            try markItemComplete()
         case majorTypeByteString, majorTypeTextString:
             guard let stringLength = argument else {
-                try openContainer(itemCount: nil, isMap: false)
+                try openContainer(itemCount: nil, isMap: false, stringMajorType: majorType)
                 break
             }
             guard stringLength <= bytesRemaining() else { throw CborDecodingError("CBOR string longer than the input") }
             readPosition += Int(stringLength)
-            markItemComplete()
+            try markItemComplete()
         case majorTypeArray:
             if let elementCount = argument, elementCount > bytesRemaining() {
                 throw CborDecodingError("CBOR array count larger than the input")

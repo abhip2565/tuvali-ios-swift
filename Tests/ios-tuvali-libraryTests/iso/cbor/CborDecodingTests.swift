@@ -201,4 +201,44 @@ final class CborDecodingTests: XCTestCase {
 
         XCTAssertThrowsError(try decodeCbor(tooLong), ofType: CborDecodingError.self)
     }
+    func testRejectsNestedIndefiniteStringChunksAndReservedSimpleValues() {
+        for hex in ["5f5f4101ffff", "7f7f6161ffff", "f800", "f814", "f81f"] {
+            XCTAssertThrowsError(try decodeCbor(hex.hexToBytes()), ofType: CborDecodingError.self)
+        }
+    }
+
+    func testRejectsInputAboveTheSessionBudget() {
+        XCTAssertThrowsError(try decodeCbor([UInt8](repeating: 0, count: 1024 * 1024 + 1)), ofType: CborDecodingError.self)
+    }
+
+    func testAcceptsArbitraryExtensionMapKeys() throws {
+        for hex in ["a1f501", "a1f601", "a1410001", "a1a1010200", "a181a1010200"] {
+            XCTAssertEqual(encodeCbor(try decodeCbor(hex.hexToBytes())).hex, hex)
+        }
+    }
+
+    func testHalfFloatAndUndefinedExtensionKeysRemainDistinct() throws {
+        let map = try decodeCbor("a2f9000000f701".hexToBytes()).asMap("extension")
+        XCTAssertEqual(map.count, 2)
+        XCTAssertEqual(map[.half(0)], 0)
+        XCTAssertEqual(map[.undefined], 1)
+    }
+
+    func testFullWidthIntegerExtensionKeysDoNotOverflowDuringComparison() throws {
+        let map = try decodeCbor("a23bffffffffffffffff001bffffffffffffffff01".hexToBytes()).asMap("extension")
+        XCTAssertEqual(map[.negativeInt(.max)], 0)
+        XCTAssertEqual(map[.unsignedInt(.max)], 1)
+        XCTAssertThrowsError(
+            try decodeCbor("a23bffffffffffffffff003bffffffffffffffff01".hexToBytes()),
+            ofType: CborDecodingError.self
+        )
+    }
+
+    func testRejectsEqualCompositeKeysWithDifferentMapEntryOrder() {
+        for hex in ["a2a20102030400a20304010201", "a281a2010203040081a20304010201"] {
+            XCTAssertThrowsError(try decodeCbor(hex.hexToBytes()), ofType: CborDecodingError.self)
+        }
+    }
+
+
 }
