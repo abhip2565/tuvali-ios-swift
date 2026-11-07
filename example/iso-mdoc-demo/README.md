@@ -8,15 +8,15 @@ Select your signing team and a physical iPhone for Bluetooth testing.
    advertises as a peripheral after scanning the QR). Multipaz Identity Reader is one candidate.
 2. On the iPhone, tap **Start ISO mdoc presentation**, allow Bluetooth, and scan the QR with the reader.
 3. Review document types, requested fields, retention flags and reader trust.
-4. Tap **Send empty response** to exercise the encrypted response path, or **Decline** to end the
+4. Tap **Send response** to exercise the encrypted response path, or **Decline** to end the
    session without answering. Each further request asks again.
 5. Read/share the run log. Repeat with Cancel, Bluetooth off, reader disconnect and no-reader timeout.
 
-Like the Android demo, the response contains **no credentials**: document error 0 (data not
-returned) for each distinct requested document type. A reader may display “no document” or
-“data not returned”; that is expected. “Reader ended session” is not credential verification.
-To test actual signed disclosure, integrate a wallet's credential/DeviceResponse builder using
-`request.sessionTranscript` and approved fields instead of `emptyDeviceResponse`.
+The demo sends a bundled, public test mDL, filtered to requested elements, through OpenID4VP's
+DeviceResponse builder. Its holder key and credential are test fixtures only. Unsupported document
+types are not returned; the demo is a transport/integration harness, not a production wallet.
+A reader's normal session termination confirms delivery; it does not prove issuer trust or claim validation.
+The Android demo instead sends an errors-only response without a credential.
 
 Reader signatures are shown as unverified by default. Optionally import your reader's trusted root
 as a **DER X.509 certificate**, before starting. The root stays in memory for this app run. PEM is
@@ -36,7 +36,7 @@ xcodebuild -project example/iso-mdoc-demo/TuvaliMdocDemo.xcodeproj \
 Run library tests from the repository root, selecting an installed simulator:
 
 ```sh
-xcodebuild test -scheme ios-tuvali-libraryTests \
+xcodebuild test -scheme ios-tuvali-library \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
 ```
 

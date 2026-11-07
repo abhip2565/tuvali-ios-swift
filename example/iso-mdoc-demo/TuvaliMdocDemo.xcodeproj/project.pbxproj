@@ -26,8 +26,9 @@
 "fileRef" = "A1B2C3D4E5F60718293A4B03";
 };
 "A1B2C3D4E5F60718293A4B05" = {
-"isa" = "XCLocalSwiftPackageReference";
-"relativePath" = "../../../inji-openid4vp-ios-swift";
+"isa" = "XCRemoteSwiftPackageReference";
+"repositoryURL" = "https://github.com/abhip2565/inji-openid4vp-ios-swift.git";
+"requirement" = { "kind" = "branch"; "branch" = "pr/mdoc-proximity-device-response"; };
 };
 "A1B2C3D4E5F60718293A4B06" = {
 "isa" = "XCSwiftPackageProductDependency";
