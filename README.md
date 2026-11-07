@@ -122,3 +122,10 @@ Events which are emitted by both Wallet and Verifier
 
 ## Note
 Currently, data transfer is supported from Wallet to Verifier only. Verifier functionalities are not available for iOS at the moment.
+
+## ISO 18013-5 mdoc session testing
+
+The ISO path exposes `MdocPresenter` for QR engagement, BLE central-client transport, encrypted
+requests/responses and reader authentication. A wallet supplies consent and its signed DeviceResponse.
+See the [simple iOS demo](example/iso-mdoc-demo/README.md) for session testing and the
+[ISO review](docs/iso-review.md) for security, reliability, performance and conformance limits.
