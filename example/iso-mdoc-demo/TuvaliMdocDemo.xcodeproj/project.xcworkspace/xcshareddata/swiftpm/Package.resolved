@@ -1,5 +1,5 @@
 {
-  "originHash" : "7ff945b510a61395311e22afb07ff94c2731a5803d0c46e34adb8c3486d35043",
+  "originHash" : "f711bac24ecf64199c4ab9c13f7a120efdb7c07b03917e859d9644bcca29572f",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -53,6 +53,15 @@
       "state" : {
         "revision" : "7a7f17761c76a932662ab77028a4329f67d645a4",
         "version" : "5.2.0"
+      }
+    },
+    {
+      "identity" : "inji-openid4vp-ios-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/abhip2565/inji-openid4vp-ios-swift.git",
+      "state" : {
+        "branch" : "pr/mdoc-proximity-device-response",
+        "revision" : "af5d76d0ff8878bd00bcfee2c9d07d33901f52ef"
       }
     },
     {
