@@ -33,7 +33,6 @@ extension MdocCallbacks {
     public func onProgress(_ progress: MdocProgress) {}
 }
 
-/// The holder's decision on one request.
 public enum MdocSharingDecision: Equatable, Sendable {
     /// Send this DeviceResponse, built and signed by the wallet for the approved fields.
     case send(deviceResponse: Data)
@@ -58,7 +57,6 @@ public struct RequestedDocument: Equatable, Sendable {
     public let readerTrust: ReaderTrustStatus
 }
 
-/// The result of checking the reader's signature on a document request.
 public enum ReaderTrustStatus: Equatable, Sendable {
     case notSigned
     case verified(readerName: String?)
@@ -73,7 +71,6 @@ public enum MdocProgress: Equatable, Sendable {
     case sendingResponse
 }
 
-/// How a presentation ended.
 public enum MdocResult: Equatable, Sendable {
     /// At least one answer was sent. [confirmedByReader] is false when the link dropped after the
     /// answer instead of the reader ending the session. Confirmation only means session
@@ -98,7 +95,6 @@ public enum MdocFailure: Equatable, Sendable {
     case internalError
 }
 
-/// present() could not start a presentation.
 public enum MdocPresentationError: Error, Equatable {
     /// Another presentation is running on this presenter.
     case alreadyRunning

@@ -71,7 +71,6 @@ public final class MdocPresenter: @unchecked Sendable {
         locked { running }?.cancel()
     }
 
-    /// What has happened so far, to decide how the presentation ends.
     private final class Progress {
         var connected = false
         var sessionEnded = false

@@ -40,8 +40,6 @@ final class MdocSessionTests: XCTestCase {
         }
     }
 
-    // MARK: the normal exchange
-
     func testReceiveRequestSetsUpTheSessionAndReturnsTheReadersDecryptedRequest() async throws {
         let (session, _) = sessionWith(message("sessionEstablishment"))
 
@@ -101,8 +99,6 @@ final class MdocSessionTests: XCTestCase {
         XCTAssertEqual(session.sessionTranscriptBytes()?.hex, SessionTestVectors.string("sessionTranscriptBytes"))
     }
 
-    // MARK: reader authentication
-
     func testReceiveRequestReportsVerifiedForADocumentSignedByATrustedReader() async throws {
         let root = try XCTUnwrap(SecCertificateCreateWithData(nil, Data(SessionTestVectors.bytes("readerAuth.rootCertificate")) as CFData))
         // the test reader certificates are valid from 2026-01-01 to 2029-01-01
@@ -126,8 +122,6 @@ final class MdocSessionTests: XCTestCase {
         XCTAssertEqual(try requestOf(event).docRequests.map(\.readerTrust), [.notSigned, .notSigned])
     }
 
-    // MARK: the reader ending
-
     func testReceiveRequestReturnsEndedWhenTheReaderSignalsEndOnTheTransport() async throws {
         let (session, _) = sessionWith(.ended)
 
@@ -145,8 +139,6 @@ final class MdocSessionTests: XCTestCase {
         XCTAssertEqual(event, .ended(status: 20))
         XCTAssertTrue(transport.sent.isEmpty)
     }
-
-    // MARK: errors and the status the reader is told
 
     func testReceiveRequestSendsStatus10AndThrowsInvalidReaderKeyErrorForAnInvalidReaderKey() async {
         // a SessionEstablishment whose reader key is not a point on P-256
@@ -253,8 +245,6 @@ final class MdocSessionTests: XCTestCase {
         XCTAssertTrue(failure is CancellationError, "\(String(describing: failure))")
         XCTAssertTrue(transport.sent.isEmpty)
     }
-
-    // MARK: order and cleanup
 
     func testRespondThrowsSessionEncryptionStateErrorBeforeARequestWasReceived() async {
         let (session, _) = sessionWith()

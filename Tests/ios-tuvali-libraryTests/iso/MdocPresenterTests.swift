@@ -42,7 +42,6 @@ final class MdocPresenterTests: XCTestCase {
         return Task { try await presenter.present(options: chosen, callbacks: callbacks) }
     }
 
-
     func testRejectsInvalidTimeoutsBeforeOpeningBluetooth() async {
         for value in [TimeInterval.nan, .infinity, -.infinity, -1, 0, .greatestFiniteMagnitude] {
             var invalid = options
@@ -82,8 +81,6 @@ final class MdocPresenterTests: XCTestCase {
         XCTAssertEqual(result, .completed(confirmedByReader: true))
         XCTAssertEqual(transport.sent.count, 1)
     }
-
-    // MARK: the normal flow
 
     func testPresentShowsTheQrTextOfTheEngagement() async throws {
         let callbacks = RecordingCallbacks()
@@ -164,8 +161,6 @@ final class MdocPresenterTests: XCTestCase {
         XCTAssertEqual(callbacks.progress, [.waitingForReader, .connected, .requestReceived, .sendingResponse])
     }
 
-    // MARK: timeouts
-
     func testPresentReturnsNoReaderFoundWhenNoReaderConnectsWithinTheEngagementTimeout() async throws {
         transport.waitForReader = true
         let shortEngagement = MdocPresentationOptions(engagementTimeout: 0.1)
@@ -192,8 +187,6 @@ final class MdocPresenterTests: XCTestCase {
 
         XCTAssertEqual(failure(of: result), .timedOut)
     }
-
-    // MARK: cancel
 
     func testCancelWhileWaitingForAReaderReturnsCancelled() async throws {
         transport.waitForReader = true
@@ -245,8 +238,6 @@ final class MdocPresenterTests: XCTestCase {
         XCTAssertTrue(failure is CancellationError, "\(String(describing: failure))")
         XCTAssertTrue(transport.closed)
     }
-
-    // MARK: the connection and the reader failing
 
     func testPresentReturnsBluetoothOffWhenBluetoothIsSwitchedOffWhileLookingForAReader() async throws {
         transport.failOnOpen = GattDisconnectedError(reason: .bluetoothTurnedOff)
@@ -312,8 +303,6 @@ final class MdocPresenterTests: XCTestCase {
         XCTAssertEqual(failure(of: result), .internalError)
         XCTAssertEqual(transport.sent.map(\.hex), [vectorHex("statusTermination")])
     }
-
-    // MARK: cleanup and misuse
 
     func testPresentAlwaysClosesTheTransportAndWipesTheDeviceKey() async throws {
         transport.queue(message("sessionEstablishment"))

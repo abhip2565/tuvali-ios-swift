@@ -22,8 +22,6 @@ final class AsyncBleCentralTests: XCTestCase {
         bluetooth.onQueue { bluetooth.manager.connectRequests.count }
     }
 
-    // MARK: connecting
-
     func testConnectCompletesAndReportsConnectedWhenIosReportsASuccessfulConnection() async throws {
         let connection = startConnecting()
         try await eventually { self.connectRequestCount() == 1 }
@@ -90,8 +88,6 @@ final class AsyncBleCentralTests: XCTestCase {
 
         XCTAssertEqual((error as? GattOperationFailedError)?.operation, .connect)
     }
-
-    // MARK: links going down
 
     func testConnectionStateBecomesLostWithRemoteDisconnectedWhenTheLinkDropsWhileIdle() async throws {
         let client = try await bluetooth.connectedClient(to: peripheral)
@@ -163,8 +159,6 @@ final class AsyncBleCentralTests: XCTestCase {
         XCTAssertEqual(error as? GattDisconnectedError, GattDisconnectedError(reason: nil))
         XCTAssertTrue(bluetooth.onQueue { peripheral.readRequests.isEmpty })
     }
-
-    // MARK: scanning
 
     func testScanAsksIosToScanForTheServiceAndYieldsEachPeripheralFound() async throws {
         let scan = bluetooth.central.scan(for: MockGattPeripheral.serviceUuid)

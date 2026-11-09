@@ -59,8 +59,6 @@ final class ReaderCertificateTests: XCTestCase {
         XCTAssertThrowsError(try ReaderCertificate(der: withTrailingByte), ofType: CertificateParsingError.self)
     }
 
-    // MARK: the DER reader
-
     func testObjectIdentifierReadsMultiByteArcs() throws {
         // 1.0.18013.5.1.6, the mdoc reader authentication purpose: 18013 takes three bytes
         let element = try DerReader.single("060728818c5d050106".hexToBytes())

@@ -15,8 +15,6 @@ final class AsyncGattClientOperationsTests: XCTestCase {
         client = try await bluetooth.connectedClient(to: peripheral)
     }
 
-    // MARK: discovery
-
     func testDiscoverServicesReturnsTheServicesIosDiscovered() async throws {
         let client = client!
         let discovery = Task { try await client.discoverServices([MockGattPeripheral.serviceUuid]) }
@@ -111,8 +109,6 @@ final class AsyncGattClientOperationsTests: XCTestCase {
         XCTAssertEqual(length, 244)
     }
 
-    // MARK: read
-
     func testReadReturnsTheCharacteristicValueIosDelivered() async throws {
         bluetooth.onQueue { peripheral.markDiscovered() }
         let client = client!
@@ -162,8 +158,6 @@ final class AsyncGattClientOperationsTests: XCTestCase {
         let error = await errorThrown(by: read)
         XCTAssertTrue(error is GattAttributeNotFoundError, "\(String(describing: error))")
     }
-
-    // MARK: write without response
 
     func testWriteWithoutResponseSendsTheValueWithTheNoResponseWriteType() async throws {
         bluetooth.onQueue { peripheral.markDiscovered() }

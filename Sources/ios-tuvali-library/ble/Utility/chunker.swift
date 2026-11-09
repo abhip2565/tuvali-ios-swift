@@ -111,7 +111,6 @@ class Chunker {
     func isComplete() -> Bool {
         let isComplete = chunksReadCounter >= totalChunkCount
         if isComplete {
-          //  os_log(.info, "isComplete: true, totalChunks: %{public}d , chunkReadCounter(1-indexed): %{public}d", totalChunkCount, chunksReadCounter)
         }
        return isComplete
     }

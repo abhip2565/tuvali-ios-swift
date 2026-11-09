@@ -13,7 +13,6 @@ class TransferHandler {
     private var failureFrameRetryCounter = 0
     private let MAX_FAILURE_FRAME_RETRY_LIMIT = 15
 
-
     func initialize(initdData: Data) {
         data = initdData
     }
@@ -75,7 +74,6 @@ class TransferHandler {
             if let chunk = chunker?.chunkBySequenceNumber(missedSeqNumber: missedSeqNumber) {
                 delegate?.write(serviceUuid: Peripheral.SERVICE_UUID, charUUID: NetworkCharNums.SUBMIT_RESPONSE_CHAR_UUID, data: chunk, withResponse: true)
             }
-            // checks if no more missing chunks exist on verifier
         }
         sendMessage(message: imessage(msgType: .READ_TRANSMISSION_REPORT, data: nil))
     }

@@ -48,8 +48,6 @@ final class AsyncGattClientNotificationsTests: XCTestCase {
         bluetooth.onQueue { peripheral.notifyRequests }
     }
 
-    // MARK: subscribing
-
     func testEnableNotificationsAsksIosToSubscribeToANotifyCharacteristic() async throws {
         let enabling = startEnabling(MockGattPeripheral.notifyUuid)
         try await eventually { self.notifyRequests().count == 1 }
@@ -110,8 +108,6 @@ final class AsyncGattClientNotificationsTests: XCTestCase {
         XCTAssertTrue(error is GattAttributeNotFoundError, "\(String(describing: error))")
     }
 
-    // MARK: the notification stream
-
     func testNotificationsDeliversEachNotifiedValueInTheOrderIosDeliveredThem() async throws {
         notify([0x01], on: MockGattPeripheral.notifyUuid)
         notify([0x02], on: MockGattPeripheral.indicateUuid)
@@ -155,8 +151,6 @@ final class AsyncGattClientNotificationsTests: XCTestCase {
         XCTAssertTrue(notified.isEmpty)
     }
 
-    // MARK: unsubscribing
-
     func testDisableNotificationsAsksIosToUnsubscribeAndWaitsForItToConfirm() async throws {
         let disabling = startDisabling(MockGattPeripheral.notifyUuid)
         try await eventually { self.notifyRequests().count == 1 }
@@ -177,8 +171,6 @@ final class AsyncGattClientNotificationsTests: XCTestCase {
         let error = await errorThrown(by: disabling)
         XCTAssertEqual((error as? GattOperationFailedError)?.operation, .disableNotifications)
     }
-
-    // MARK: the end of the stream
 
     func testNotificationsDeliversValuesReceivedBeforeALinkDropThenThrowsGattDisconnectedError() async throws {
         notify([0x01], on: MockGattPeripheral.notifyUuid)

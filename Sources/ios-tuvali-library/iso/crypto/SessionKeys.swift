@@ -22,7 +22,6 @@ final class SessionKeys {
     }
 }
 
-/// Overwrites [bytes] with zeros in place.
 func zeroBytes(_ bytes: inout [UInt8]) {
     for index in bytes.indices { bytes[index] = 0 }
 }

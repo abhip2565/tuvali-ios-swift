@@ -1,6 +1,5 @@
 import Foundation
 
-/// What a timed operation produced, carried out of its child task.
 private enum TimedOutcome<T>: @unchecked Sendable {
     case finished(T)
     case timedOut

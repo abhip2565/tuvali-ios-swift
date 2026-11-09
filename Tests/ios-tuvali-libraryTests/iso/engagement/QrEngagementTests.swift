@@ -42,8 +42,6 @@ final class QrEngagementTests: XCTestCase {
         XCTAssertThrowsError(try engagement.toQrText(), ofType: QrEngagementError.self)
     }
 
-    // MARK: base64url
-
     func testEncodeBase64UrlWithoutPaddingMatchesTheRfc4648TestVectorsWithPaddingRemoved() {
         // RFC 4648 section 10: "", "f", "fo", "foo", "foob", "fooba", "foobar"
         let inputs = ["", "f", "fo", "foo", "foob", "fooba", "foobar"]

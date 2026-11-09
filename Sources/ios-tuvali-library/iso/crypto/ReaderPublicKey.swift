@@ -11,7 +11,6 @@ struct ReaderPublicKey {
     let x: [UInt8]
     let y: [UInt8]
 
-    /// Parses and checks the COSE_Key bytes carried inside EReaderKeyBytes.
     static func fromCoseKey(_ encodedCoseKey: [UInt8]) throws -> ReaderPublicKey {
         guard case let .map(coseKey) = try decodeCbor(encodedCoseKey) else {
             throw InvalidReaderKeyError("EReaderKey is not a COSE_Key map")

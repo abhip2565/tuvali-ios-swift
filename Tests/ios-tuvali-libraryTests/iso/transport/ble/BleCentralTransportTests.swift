@@ -55,8 +55,6 @@ final class BleCentralTransportTests: XCTestCase {
         }
     }
 
-    // MARK: opening the connection
-
     func testOpenChecksIdentSubscribesToStateAndServer2ClientThenWritesStart() async throws {
         let reader = reader()
 
@@ -161,8 +159,6 @@ final class BleCentralTransportTests: XCTestCase {
         XCTAssertEqual(finder.scanRequests.count, 1)
     }
 
-    // MARK: sending
-
     func testSendWritesTheMessageToClient2ServerInPartsOfMtuMinus3Bytes() async throws {
         // the smallest MTU (23): parts of 20 bytes, 19 of them message
         let reader = reader(partBytes: 20)
@@ -203,8 +199,6 @@ final class BleCentralTransportTests: XCTestCase {
         XCTAssertTrue(failure is GattDisconnectedError, "\(String(describing: failure))")
         XCTAssertEqual(finder.scanRequests.count, 1)
     }
-
-    // MARK: receiving
 
     func testReceiveReturnsAWholeMessageRebuiltFromTheReadersParts() async throws {
         let reader = reader(partBytes: 20)
@@ -306,8 +300,6 @@ final class BleCentralTransportTests: XCTestCase {
 
         XCTAssertEqual(event, .message("a1".hexToBytes()))
     }
-
-    // MARK: closing
 
     func testCloseWritesEndUnsubscribesFromStateAndServer2ClientThenDisconnects() async throws {
         let reader = reader()

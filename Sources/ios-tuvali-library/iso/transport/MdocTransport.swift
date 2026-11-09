@@ -11,7 +11,6 @@ protocol MdocTransport: AnyObject {
     /// Finds and connects to the reader, ready to exchange messages.
     func open() async throws
 
-    /// Sends one whole message to the reader.
     func send(_ message: [UInt8]) async throws
 
     /// Waits for the reader's next whole message, or for it to end the session.

@@ -1,17 +1,9 @@
 import Foundation
 import os
 
-/// Tuvali's logger. Each one has a tag naming where the messages come from, like an Android log
-/// tag; give each class its own: `private let logger = TaggedLogger(tag: "AsyncGattClient")`.
-///
-/// Messages go to the unified log under the subsystem "io.mosip.tuvali", with the tag as the
-/// category, so they can be filtered in Console or with
-/// `log stream --predicate 'subsystem == "io.mosip.tuvali" AND category == "AsyncGattClient"'`.
-///
-/// Messages are logged as public text, as written. Never put key material, credential data,
-/// session messages or URIs in one: log what happened, with sizes and statuses, not the values.
-///
-/// Built on os_log, which iOS 13 has; Apple's own os.Logger needs iOS 14.
+/// Unified logging under io.mosip.tuvali, with one category per calling class.
+/// Messages are public: never log keys, credentials, session messages, or URIs. Log only
+/// operation names, sizes, and statuses. Uses os_log for iOS 13 compatibility.
 struct TaggedLogger {
     static let subsystem = "io.mosip.tuvali"
 

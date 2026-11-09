@@ -55,8 +55,6 @@ final class MockIsoReader: GattClient, @unchecked Sendable {
         return self
     }
 
-    // MARK: GattClient
-
     func findService(_ serviceUuid: CBUUID) async throws -> CBService { service }
 
     func read(serviceUuid: CBUUID, characteristicUuid: CBUUID) async throws -> [UInt8] {
@@ -89,8 +87,6 @@ final class MockIsoReader: GattClient, @unchecked Sendable {
         events.append("close")
         notificationContinuation.finish()
     }
-
-    // MARK: what the test makes the reader do
 
     /// Notifies [message] on Server2Client in parts of partBytes with 0x01 / 0x00 headers.
     func sendMessage(_ message: [UInt8]) {

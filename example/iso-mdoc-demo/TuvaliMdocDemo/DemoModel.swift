@@ -4,7 +4,6 @@ import SwiftCBOR
 import SwiftUI
 import ios_tuvali_library
 
-/// Like the Android demo: exercise the session without provisioning a credential or signing key.
 func emptyDeviceResponse(docTypes: [String]) -> Data {
     let errors: [CBOR] = Set(docTypes).sorted().map { .map([.utf8String($0): .unsignedInt(0)]) }
     let response: CBOR = .map([

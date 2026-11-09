@@ -34,8 +34,6 @@ final class ReaderAuthenticatorTests: XCTestCase {
         )
     }
 
-    // MARK: the four trust states
-
     func testCheckReturnsNotSignedWhenTheRequestHasNoReaderAuth() {
         let trust = check(nil)
 
@@ -83,8 +81,6 @@ final class ReaderAuthenticatorTests: XCTestCase {
         guard case .unverified = trust else { return XCTFail("Not unverified: \(trust)") }
     }
 
-    // MARK: signatures that must not be accepted
-
     func testCheckReturnsInvalidWhenTheSignatureDoesNotVerify() throws {
         let tampered = try rebuild(try readerAuth("valid"), signature: { bytes in
             var changed = bytes
@@ -111,8 +107,6 @@ final class ReaderAuthenticatorTests: XCTestCase {
 
         XCTAssertEqual(trust, .invalid(reason: "Reader signature does not verify"))
     }
-
-    // MARK: the reader certificate
 
     func testCheckReturnsInvalidWhenTheReaderCertificateHasExpired() throws {
         // valid from 2020-01-01 to 2021-01-01
@@ -144,8 +138,6 @@ final class ReaderAuthenticatorTests: XCTestCase {
         guard case let .invalid(reason) = trust else { return XCTFail("Not invalid: \(trust)") }
         XCTAssertTrue(reason.hasPrefix("readerAuth could not be read"), reason)
     }
-
-    // MARK: the COSE_Sign1 structure
 
     func testCheckReturnsInvalidForAnAlgorithmItDoesNotSupport() throws {
         // COSE alg -8 is EdDSA
@@ -204,7 +196,6 @@ final class ReaderAuthenticatorTests: XCTestCase {
 
         guard case .verified = trust else { return XCTFail("Not verified: \(trust)") }
     }
-
 
     func testRejectsDuplicateHeaderBucketsEvenWithAValidSignature() throws {
         let valid = try readerAuth("valid")

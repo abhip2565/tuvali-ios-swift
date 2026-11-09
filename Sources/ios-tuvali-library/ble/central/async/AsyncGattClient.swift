@@ -72,12 +72,10 @@ final class AsyncGattClient: GattClient, GattPeripheralEvents, @unchecked Sendab
         notificationContinuation = continuation
     }
 
-    /// connectionState, read from any task.
     func currentConnectionState() async -> GattConnectionState {
         await onQueue { self.connectionState }
     }
 
-    /// maximumWriteLength, read from any task.
     func currentMaximumWriteLength() async -> Int {
         await onQueue { self.maximumWriteLength }
     }
@@ -102,7 +100,6 @@ final class AsyncGattClient: GattClient, GattPeripheralEvents, @unchecked Sendab
         }
     }
 
-    /// findService with the default retries.
     func findService(_ serviceUuid: CBUUID) async throws -> CBService {
         try await findService(serviceUuid, attempts: 3, retryDelay: 0.5)
     }
@@ -258,7 +255,6 @@ final class AsyncGattClient: GattClient, GattPeripheralEvents, @unchecked Sendab
         }
     }
 
-    /// Completes operation [operationId] if it is still the pending one.
     @discardableResult
     private func finishOperation(_ operationId: UUID, with result: Result<Any, Error>) -> Bool {
         guard let pending = pendingOperation, pending.id == operationId else { return false }
@@ -271,7 +267,6 @@ final class AsyncGattClient: GattClient, GattPeripheralEvents, @unchecked Sendab
         return true
     }
 
-    /// Completes the pending operation if it is the one this answer is for.
     @discardableResult
     private func completePendingOperation(
         _ operation: GattOperation,
@@ -308,7 +303,6 @@ final class AsyncGattClient: GattClient, GattPeripheralEvents, @unchecked Sendab
         return characteristic
     }
 
-    /// An answer's error as the operation's failure, or [successValue].
     private func answer(
         _ operation: GattOperation,
         _ error: Error?,

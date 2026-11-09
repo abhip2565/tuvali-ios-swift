@@ -84,7 +84,6 @@ final class BleCentralTransport: MdocTransport {
         }
     }
 
-    /// Sends one whole message to the reader on Client2Server, split into parts.
     func send(_ message: [UInt8]) async throws {
         guard let openClient = client, let openChunker = chunker else {
             throw IsoTransportStateError("Transport is not open")

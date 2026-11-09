@@ -6,8 +6,6 @@ import XCTest
 /// hostile input fails with CborDecodingError (later mapped to session status 11).
 final class CborDecodingTests: XCTestCase {
 
-    // MARK: valid input
-
     func testDecodeCborReadsIntegersWrittenInANonShortestForm() throws {
         let zeroWithOneByteArgument = "1800".hexToBytes()
         let zeroWithFourByteArgument = "1a00000000".hexToBytes()
@@ -89,8 +87,6 @@ final class CborDecodingTests: XCTestCase {
 
         guard case .array = decoded else { return XCTFail("Expected an array, got \(decoded)") }
     }
-
-    // MARK: malformed or hostile input
 
     func testDecodeCborThrowsCborDecodingErrorWhenTheInputIsEmpty() {
         let empty: [UInt8] = []
@@ -239,6 +235,5 @@ final class CborDecodingTests: XCTestCase {
             XCTAssertThrowsError(try decodeCbor(hex.hexToBytes()), ofType: CborDecodingError.self)
         }
     }
-
 
 }
