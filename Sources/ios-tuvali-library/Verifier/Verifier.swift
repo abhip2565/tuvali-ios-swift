@@ -11,13 +11,28 @@ public class Verifier: NSObject {
         ErrorHandler.sharedInstance.setOnError(onError: self.handleError)
     }
 
+    /// iOS cannot advertise service data, so wallets tell verifiers apart by local name.
+    /// A fixed name would make nearby verifiers look identical, so every advertisement
+    /// uses a fresh random name and `advIdentifier` is not used on iOS.
     @available(iOS 13.0, *)
     public func startAdvertisement(_ advIdentifier: String) -> String {
         bleCommunicator?.stop()
+        let name = Self.freshAdvertisementName()
         let communicator = VerifierBleCommunicator(eventEmitter: eventEmitter)
         bleCommunicator = communicator
-        communicator.startAdvertisement(advIdentifier: advIdentifier)
-        return Self.connectionURI(name: advIdentifier, publicKey: communicator.publicKey)
+        communicator.startAdvertisement(advIdentifier: name)
+        return Self.connectionURI(name: name, publicKey: communicator.publicKey)
+    }
+
+    /// 6 random bytes as base64url: 8 characters. iOS shortens the advertised local name
+    /// to 8 characters to make room for its own manufacturer data, so a longer name would
+    /// reach wallets truncated and never match the name in the QR.
+    static func freshAdvertisementName() -> String {
+        let bytes = Data((0..<6).map { _ in UInt8.random(in: .min ... .max) })
+        return bytes.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
     }
 
     static func connectionURI(name: String, publicKey: Data) -> String {

@@ -72,27 +72,30 @@ final class ios_tuvali_libraryTests: XCTestCase {
         XCTAssertEqual(mockDelegate.failedMessage, "Verifier received empty response")
     }
 
-    func testVerifierUrlEncoding() {
+    func testEachAdvertisementGetsAFreshNameThatIsSharedInTheQR() throws {
         let verifier = Verifier()
-        // Test advertising identifier with special characters and spaces
-        let advName = "Test Name!@# 123"
-        let uri = verifier.startAdvertisement(advName)
-        
-        // Check that the returned URI is formatted correctly
-        XCTAssertTrue(uri.hasPrefix("OPENID4VP://connect?"))
-        
-        // Parse the URI using URLComponents to verify components
-        guard let components = URLComponents(string: uri) else {
-            XCTFail("Failed to parse URI: \(uri)")
-            return
-        }
-        
-        let nameQueryItem = components.queryItems?.first(where: { $0.name == "name" })
-        XCTAssertNotNil(nameQueryItem)
-        XCTAssertEqual(nameQueryItem?.value, advName)
-        
-        // Ensure that in the raw URI string, spaces and special characters are encoded
-        XCTAssertTrue(uri.contains("Test%20Name"))
+
+        let first = try advertisedName(verifier.startAdvertisement("OVPMOSIP"))
+        let second = try advertisedName(verifier.startAdvertisement("OVPMOSIP"))
+        verifier.disconnect()
+
+        XCTAssertNotEqual(first, "OVPMOSIP")
+        XCTAssertNotEqual(first, second)
+    }
+
+    func testFreshAdvertisementNameIsEightUrlSafeCharactersSoIOSDoesNotTruncateIt() {
+        // base64url alphabet, no padding
+        let urlSafe = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_")
+
+        let name = Verifier.freshAdvertisementName()
+
+        XCTAssertEqual(name.utf8.count, 8)
+        XCTAssertTrue(name.unicodeScalars.allSatisfy { urlSafe.contains($0) })
+    }
+
+    private func advertisedName(_ uri: String) throws -> String? {
+        let components = try XCTUnwrap(URLComponents(string: uri))
+        return components.queryItems?.first(where: { $0.name == "name" })?.value
     }
 
     func testVerifierDisconnect() {
